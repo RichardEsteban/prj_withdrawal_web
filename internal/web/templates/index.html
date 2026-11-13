@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco prj_withdrawal</title>
+<style>
+  :root { --rojo:#7a1f1f; --azul:#1f4e8c; --gris:#f3f4f6; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Calibri, sans-serif; margin:0; background:#fff; color:#222; }
+  header { background:var(--rojo); color:#fff; padding:14px 24px; }
+  header h1 { margin:0; font-size:20px; } header p { margin:2px 0 0; font-size:13px; opacity:.85; }
+  main { max-width:980px; margin:0 auto; padding:16px 24px 40px; }
+  h2 { color:var(--azul); font-size:16px; margin:20px 0 8px; }
+  .cuentas { display:flex; gap:12px; flex-wrap:wrap; }
+  .cuenta { background:var(--gris); border-left:5px solid var(--azul); padding:10px 16px; min-width:150px; }
+  .cuenta b { display:block; font-size:13px; color:#555; } .cuenta span { font-size:22px; font-weight:600; }
+  form { display:flex; gap:10px; flex-wrap:wrap; align-items:end; background:var(--gris); padding:12px; }
+  label { font-size:12px; color:#555; display:block; margin-bottom:3px; }
+  select, input { padding:7px 8px; font-size:14px; border:1px solid #bbb; border-radius:4px; }
+  button { background:var(--rojo); color:#fff; border:0; padding:9px 18px; font-size:14px; border-radius:4px; cursor:pointer; }
+  .msg { padding:10px 14px; margin:12px 0; border-left:5px solid; font-size:14px; }
+  .msg.EXITOSA { background:#e7f6ea; border-color:#2e9e4f; } .msg.RECHAZADA { background:#fff4e0; border-color:#e08a00; }
+  .msg.ERROR { background:#fdeaea; border-color:#c0392b; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th { background:var(--rojo); color:#fff; text-align:left; padding:6px 8px; } td { border-bottom:1px solid #ddd; padding:6px 8px; }
+  .b { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; }
+  .b.EXITOSA { background:#d4f0dc; color:#1c6b36; } .b.RECHAZADA { background:#ffe7bd; color:#8a5300; } .b.ERROR { background:#f9d0cd; color:#8e2318; }
+  footer { font-size:12px; color:#777; margin-top:18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Banco prj_withdrawal</h1>
+  <p>Retiro, Abono e Integridad de Transacci&oacute;n con log JSON (aplicaci&oacute;n web refactorizada)</p>
+</header>
+<main>
+  <h2>Cuentas</h2>
+  <div class="cuentas">
+    {{range .Cuentas}}<div class="cuenta"><b>{{.Nombre}}</b><span>{{printf "%.2f" .Saldo}}</span></div>{{end}}
+  </div>
+
+  <h2>Nueva transacci&oacute;n</h2>
+  {{if .Mensaje}}<div class="msg {{.Estado}}">{{.Mensaje}}</div>{{end}}
+  <form method="post" action="/operar">
+    <div><label for="titular">Titular</label>
+      <select id="titular" name="titular">{{range .Cuentas}}<option>{{.Nombre}}</option>{{end}}</select></div>
+    <div><label for="tipo">Operaci&oacute;n</label>
+      <select id="tipo" name="tipo"><option value="RETIRO">Retiro</option><option value="ABONO">Abono</option></select></div>
+    <div><label for="monto">Monto</label>
+      <input id="monto" name="monto" type="number" step="0.01" required placeholder="0.00"></div>
+    <button type="submit">Procesar</button>
+  </form>
+
+  <h2>Historial (log JSON)</h2>
+  <table>
+    <tr><th>Id</th><th>Fecha</th><th>Titular</th><th>Tipo</th><th>Monto</th><th>Saldo antes</th><th>Saldo despu&eacute;s</th><th>Estado</th><th>Mensaje</th></tr>
+    {{range .Historial}}
+    <tr><td>{{.ID}}</td><td>{{.Fecha}}</td><td>{{.Titular}}</td><td>{{.Tipo}}</td><td>{{printf "%.2f" .Monto}}</td>
+        <td>{{printf "%.2f" .SaldoAntes}}</td><td>{{printf "%.2f" .SaldoDespues}}</td>
+        <td><span class="b {{.Estado}}">{{.Estado}}</span></td><td>{{.Mensaje}}</td></tr>
+    {{else}}<tr><td colspan="9">Sin transacciones todav&iacute;a.</td></tr>{{end}}
+  </table>
+  <footer>API: <code>GET /api/cuentas</code> &middot; <code>GET /api/transacciones</code> &middot; <code>POST /api/transacciones</code></footer>
+</main>
+</body>
+</html>
