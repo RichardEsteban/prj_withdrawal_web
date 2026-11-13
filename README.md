@@ -1,61 +1,84 @@
 # prj_withdrawal_web
 
-Aplicación web en Go (v2.0.0) que refactoriza el proyecto `prj_withdrawal` (CLI v1.4.0):
-**Retiro**, **Abono** e **Integridad de Transacción** con log en formato JSON.
-Desarrollada con BDD/TDD de forma iterativa e incremental (DSL / Gherkin).
+Una app que permite **retirar** y **abonar** dinero en unas cuentas de ejemplo
+y deja un **historial** de todo lo que se intenta, tenga éxito o no.
 
-## Requisitos
+Es un proyecto que fue creciendo por etapas, hecho en el lenguaje **Go**
+y descrito con escenarios en lenguaje natural (Gherkin / BDD)
 
-- [Go 1.22 o superior](https://go.dev/dl). No usa dependencias externas.
+## Imagen de la Aplicacion
 
-## Ejecutar
+![Captura de la aplicación: cuentas, formulario de transacción e historial](docs/captura.png)
+
+## ¿Qué hace?
+
+- **Retirar** dinero de una cuenta (solo si hay saldo suficiente).
+- **Abonar** dinero a una cuenta (solo montos mayores que cero).
+- **Guardar un historial** de cada intento, con fecha, monto, saldos y resultado:
+  - **EXITOSA**: la operación se hizo y el saldo cambió.
+  - **RECHAZADA**: no se hizo porque no había saldo suficiente.
+  - **ERROR**: no se hizo porque el monto no era válido (cero o negativo).
+- **No perder datos**: el historial se guarda en un archivo y, al volver a abrir el programa,
+  los saldos se recuperan solos.
+- Si por algún motivo no se puede guardar el historial, la operación se **deshace**:
+  o se hace todo o no se hace nada.
+
+Cuentas de ejemplo: Alice (234.56), Hamza (198.76), Carlos (500.00) y Pedro (300.00).
+
+## ¿Qué contiene este proyecto?
+
+| Carpeta o archivo | Para qué sirve |
+|---|---|
+| `webbank/` | El programa principal: es lo que se ejecuta para abrir la página. |
+| `internal/banco/` | Las reglas del banco: cuentas, retiros, abonos y el historial. |
+| `internal/web/` | La página web y las direcciones que el navegador usa. |
+| `features/` | Los escenarios escritos en lenguaje natural (qué debe pasar en cada caso). |
+| `README.md` | Esta guía. |
+
+## ¿Cómo se ejecuta?
+
+**1. Instalar Go** (solo la primera vez): descargarlo desde <https://go.dev/dl> (versión 1.22 o superior)
+e instalarlo. No hay que instalar nada más.
+
+**2. Abrir una terminal** (PowerShell, CMD o Terminal) dentro de la carpeta del proyecto,
+la que contiene el archivo `go.mod`.
+
+**3. Escribir este comando:**
 
 ```bash
 go run ./webbank
 ```
 
-Abrir <http://localhost:8080>. Opciones (para exponerlo en la red, usar `-addr :8080`):
+**4. Abrir el navegador** en <http://localhost:8080>.
 
-| Bandera | Por defecto | Descripción |
-|---|---|---|
-| `-addr` | `127.0.0.1:8080` | Dirección de escucha (solo localhost; no abre puertos a la red ni muestra avisos del firewall) |
-| `-log` | `data/transacciones.json` | Archivo JSON del historial |
+## ¿Cómo se usa la página?
 
-Cuentas iniciales: Alice 234.56, Hamza 198.76, Carlos 500.00, Pedro 300.00.
-Los saldos se restauran desde el log al reiniciar (el historial es la fuente de verdad).
+1. Arriba se ven las **cuentas** con su saldo actual.
+2. En **Nueva transacción** se elige el titular, si es **Retiro** o **Abono**, y el monto.
+3. Al presionar **Procesar**, aparece un mensaje con el resultado.
+4. Abajo, el **Historial** muestra todos los intentos (los más recientes primero).
 
-## Pruebas
+Ejemplos para probar:
+
+| Qué hacer | Resultado esperado |
+|---|---|
+| Alice retira 200 | EXITOSA (le quedan 34.56) |
+| Hamza retira 200 | RECHAZADA (solo tiene 198.76) |
+| Carlos abona 150 | EXITOSA (pasa a 650.00) |
+| Alice abona -20 | ERROR (el monto debe ser mayor que cero) |
+
+El historial se guarda en `data/transacciones.json`; se crea solo la primera vez.
+Para empezar de cero, basta con borrar la carpeta `data` con el programa cerrado.
+
+## ¿Cómo se comprueba que funciona bien?
+
+El proyecto trae pruebas automáticas que revisan los casos de los escenarios (retiro, abono,
+historial, deshacer si falla el guardado, varios usuarios a la vez y la página web).
+Para correrlas:
 
 ```bash
-go vet ./...
 go test ./... -count=1
 ```
 
-Las pruebas replican los escenarios de `features/*.feature` (retiro, abono e integridad),
-además de reversión por fallo del log, restauración de saldos, concurrencia y API HTTP.
+Si todo está bien, cada línea termina en `ok`.
 
-## API JSON
-
-| Método y ruta | Descripción |
-|---|---|
-| `GET /api/cuentas` | Lista de cuentas y saldos |
-| `GET /api/transacciones` | Historial completo (log JSON) |
-| `POST /api/transacciones` | Crea una transacción `{"titular":"Alice","tipo":"RETIRO","monto":200}` |
-
-Respuestas de `POST`: `201` EXITOSA, `422` RECHAZADA o ERROR (queda registrada), `400` petición inválida,
-`404` cuenta inexistente, `500` si no se pudo registrar (la transacción se revierte).
-
-## Estructura
-
-```
-webbank/            punto de entrada (flags, composición)
-internal/banco/     dominio: Cuenta, Transaccion, Registro (JSON atómico), Servicio (integridad)
-internal/web/       capa HTTP: páginas HTML (plantilla incrustada) y API JSON
-features/           especificación Gherkin (DSL)
-```
-
-## Reglas de negocio
-
-- **RN-01** No se retira más que el saldo. **RN-04** Los montos deben ser mayores que cero.
-- **RN-03** Atomicidad: si no se puede registrar, se revierte. **RN-07** Todo intento queda en el log
-  (EXITOSA, RECHAZADA o ERROR). **RN-08** Solo las exitosas modifican el saldo. **RN-09** Id correlativo.
