@@ -11,7 +11,7 @@ Desarrollada con BDD/TDD de forma iterativa e incremental (DSL / Gherkin).
 ## Ejecutar
 
 ```bash
-go run ./cmd/webbank
+go run ./webbank
 ```
 
 Abrir <http://localhost:8080>. Opciones (para exponerlo en la red, usar `-addr :8080`):
@@ -48,7 +48,7 @@ Respuestas de `POST`: `201` EXITOSA, `422` RECHAZADA o ERROR (queda registrada),
 ## Estructura
 
 ```
-cmd/webbank/        punto de entrada (flags, composición)
+webbank/            punto de entrada (flags, composición)
 internal/banco/     dominio: Cuenta, Transaccion, Registro (JSON atómico), Servicio (integridad)
 internal/web/       capa HTTP: páginas HTML (plantilla incrustada) y API JSON
 features/           especificación Gherkin (DSL)

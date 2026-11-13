@@ -3,6 +3,5 @@ data/
 transacciones.json
 *.tmp
 
-# Binarios (solo en la raiz; no ignorar la carpeta cmd/webbank)
+# Binarios compilados
 *.exe
-/webbank
