@@ -14,11 +14,11 @@ Desarrollada con BDD/TDD de forma iterativa e incremental (DSL / Gherkin).
 go run ./cmd/webbank
 ```
 
-Abrir <http://localhost:8080>. Opciones:
+Abrir <http://localhost:8080>. Opciones (para exponerlo en la red, usar `-addr :8080`):
 
 | Bandera | Por defecto | Descripción |
 |---|---|---|
-| `-addr` | `:8080` | Dirección de escucha |
+| `-addr` | `127.0.0.1:8080` | Dirección de escucha (solo localhost; no abre puertos a la red ni muestra avisos del firewall) |
 | `-log` | `data/transacciones.json` | Archivo JSON del historial |
 
 Cuentas iniciales: Alice 234.56, Hamza 198.76, Carlos 500.00, Pedro 300.00.
